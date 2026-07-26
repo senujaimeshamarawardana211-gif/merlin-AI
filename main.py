@@ -404,23 +404,39 @@ async def chat(request: Request):
     
     messages.append({"role": "user", "content": user_message})
 
-    try:
-        response = requests.post(
-            url="https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "meta-llama/llama-3.3-70b-instruct:free",
-                "messages": messages,
-                "temperature": 0.3,
-            },
-            timeout=30
-        )
-        res_json = response.json()
-        reply = res_json["choices"][0]["message"]["content"]
-        
-        return {"reply": reply}
-    except Exception as e:
-        return {"reply": f"Error: {str(e)}"}
+    # Free Models List (Primary + Fallbacks)
+    models = [
+        "google/gemini-2.0-flash-lite-001:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "deepseek/deepseek-r1:free",
+        "mistralai/mistral-7b-instruct:free"
+    ]
+
+    for model in models:
+        try:
+            response = requests.post(
+                url="https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {OPENROUTER_API_KEY.strip()}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "messages": messages,
+                    "temperature": 0.3,
+                },
+                timeout=25
+            )
+            res_json = response.json()
+            
+            if "choices" in res_json and len(res_json["choices"]) > 0:
+                reply = res_json["choices"][0]["message"]["content"]
+                if "</thought>" in reply:
+                    reply = reply.split("</thought>")[-1].strip()
+                return {"reply": reply}
+            elif "error" in res_json:
+                continue # Try next model
+        except Exception:
+            continue # Try next model
+
+    return {"reply": "Error: All free models are currently busy or your API key is invalid. Please check your OpenRouter API Key."}
