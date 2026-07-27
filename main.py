@@ -570,18 +570,20 @@ async def chat(request: Request):
             else:
                 return {"reply": random.choice(general_options)}
 
-        # --- OPTIMIZED SHORT SYSTEM PROMPT FOR HIGHEST QUALITY SINHALA ---
+        # --- REVISED SYSTEM PROMPT FOR COMPREHENSIVE, NATURAL RESPONSES ---
         system_prompt = {
             "role": "system",
             "content": (
-                "You are Merlin AI built by Infinity Wave.\n"
-                "Respond in clear, highly natural, everyday spoken Sri Lankan Sinhala (සාමාන්‍යයෙන් කතා කරන සිංහල).\n"
-                "Never use formal, weird, or translated-sounding grammar like 'ගියෝ', 'වන්නේය', 'නොවේ'.\n"
-                "Keep sentences clear and accurate."
+                "You are Merlin AI, an intelligent AI assistant developed by Infinity Wave.\n"
+                "When responding in Sinhala:\n"
+                "1. Use natural, clear, standard Sinhala. Avoid overly rigid or archaic language.\n"
+                "2. Do not repeat user queries as opening statements like 'සිංහලෙන් කතා කරන්න ඕකි'. Jump straight to answering.\n"
+                "3. Provide comprehensive, well-structured responses. Use headings, bullet points, and main details whenever answering informative topics.\n"
+                "4. Avoid super short 1-2 sentence summaries unless explicitly asked for a short answer."
             )
         }
 
-        # Extremely tight history (last 2 messages) to save maximum tokens for 70B model
+        # Send last 2 turns of context
         limited_history = history[-2:] if len(history) > 2 else history
 
         messages = [system_prompt]
@@ -597,12 +599,12 @@ async def chat(request: Request):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama-3.3-70b-versatile",  # High quality model with precise Sinhala
+                "model": "llama-3.3-70b-versatile",
                 "messages": messages,
-                "temperature": 0.3,
-                "max_tokens": 1000
+                "temperature": 0.4,
+                "max_tokens": 2500
             },
-            timeout=25
+            timeout=30
         )
         
         res_json = response.json()
