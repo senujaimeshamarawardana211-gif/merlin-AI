@@ -1,4 +1,5 @@
 import os
+import random
 import requests
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -542,20 +543,36 @@ async def chat(request: Request):
         if not GROQ_API_KEY:
             return {"reply": "මචං Vercel එකේ GROQ_API_KEY එක Missing වගේ! පොඩ්ඩක් Check කරන්න."}
 
-        # --- GREETINGS INTERCEPT (PURE ENGLISH ONLY) ---
+        # --- GREETINGS INTERCEPT (DYNAMIC RANDOM RESPONSES) ---
         clean_msg = user_message.lower().strip("!.,? ")
         greeting_words = ["hi", "hello", "hey", "good evening", "good morning", "good afternoon"]
 
-        # User කියපු Text එකේ Greetings අඩංගුද නැතහොත් ඒ විතරක් තියෙනවද බලනවා (e.g. "hi good evening")
         is_greeting = any(word in clean_msg for word in greeting_words) and len(clean_msg.split()) <= 4
 
         if is_greeting:
+            # Multi-options set up for random choice
+            evening_options = [
+                "Good evening! I am Merlin AI. How can I assist you today? 🌙",
+                "Good evening! I am Merlin AI. What's the vibe tonight? 🌙",
+                "Good evening! I am Merlin AI. How can I help you tonight? 🌙"
+            ]
+            morning_options = [
+                "Good morning! I am Merlin AI. How can I assist you today? ☀️",
+                "Good morning! I am Merlin AI. What's the vibe today? ☀️",
+                "Good morning! I am Merlin AI. Ready to start the day? ☀️"
+            ]
+            general_options = [
+                "Hi! I am Merlin AI. How can I assist you today? 👋",
+                "Hi! I am Merlin AI. What's the vibe? 👋",
+                "Hey! I am Merlin AI. How can I help you today? 👋"
+            ]
+
             if "evening" in clean_msg:
-                return {"reply": "Good evening! I am Merlin AI. How can I assist you today? What's the vibe? 🌙"}
+                return {"reply": random.choice(evening_options)}
             elif "morning" in clean_msg:
-                return {"reply": "Good morning! I am Merlin AI. How can I help you today? What's the vibe? ☀️"}
+                return {"reply": random.choice(morning_options)}
             else:
-                return {"reply": "Hi! I am Merlin AI. How can I assist you today? What's the vibe? 👋"}
+                return {"reply": random.choice(general_options)}
 
         # --- SYSTEM PROMPT FOR OTHER QUESTIONS (SINGLISH / SINHALA / ENGLISH) ---
         system_prompt = {
