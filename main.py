@@ -138,7 +138,6 @@ async def read_root():
                 position: relative;
             }
             
-            /* Welcome Banner Design */
             .welcome-container {
                 margin: auto;
                 text-align: center;
@@ -352,13 +351,11 @@ async def read_root():
                 const chat = chats[currentChatId];
                 const msgs = chat.messages || [];
                 
-                // If there are no messages, show the Random Greeting
                 if (msgs.length === 0) {
                     const displayGreeting = chat.greeting || getRandomGreeting();
                     const welcomeDiv = document.createElement("div");
                     welcomeDiv.className = "welcome-container";
                     
-                    // Plain string concatenation to prevent string interpolation bugs
                     welcomeDiv.innerHTML = 
                         '<div class="welcome-title">' + displayGreeting + '</div>' +
                         '<div class="welcome-subtitle">Ask Merlin anything to get started...</div>';
@@ -418,8 +415,6 @@ async def read_root():
                     chat.messages.push({ role: "assistant", content: data.reply });
                     chat.history.push({"role": "user", "content": message});
                     chat.history.push({"role": "assistant", "content": data.reply});
-                    
-                    if (chat.history.length > 10) chat.history = chat.history.slice(-10);
 
                     saveToStorage();
                     renderHistory();
@@ -443,28 +438,22 @@ async def chat(request: Request):
     if not GROQ_API_KEY:
         return {"reply": "Error: GROQ_API_KEY missing in Vercel Environment Variables!"}
 
+    # Simplified system prompt for natural everyday spoken Sinhala
     system_prompt = {
         "role": "system",
         "content": (
-            "You are Merlin AI (මර්ලින් AI), a friendly, highly intelligent, native Sri Lankan AI assistant created by Infinity Wave.\n\n"
-            "LANGUAGE RULES FOR NATURAL SRI LANKAN SINHALA:\n"
-            "1. SCRIPT: ALWAYS reply in standard Unicode Sinhala (සිංහල අක්ෂර) when user speaks Sinhala or Singlish (English letters Sinhala).\n"
-            "2. NATURAL GRAMMAR: Write Sinhala like a real native Sri Lankan friend speaks. DO NOT translate English word-for-word.\n"
-            "3. WORDS TO USE:\n"
-            "   - 'ඔයා' (You), 'මම' (Me), 'යාලුවා' / 'මචං' (Friend - keep it polite yet casual).\n"
-            "   - 'මොකද වුණේ?' (What happened?), 'අවුලක් නෑ' (No problem), 'මම හොඳින් ඉන්නවා' (I'm doing well).\n"
-            "4. WORDS TO STRICTLY AVOID (ROBOTIC/BOOK WORDS):\n"
-            "   - DO NOT USE: 'ඔබ', 'ඔබගේ', 'සංවාද', 'ගැටලුව', 'අමාරුද', 'සහය', 'කළ හැක'. These sound robotic and unnatural!\n"
-            "5. EXAMPLES OF CORRECT RESPONSES:\n"
-            "   - User: 'mama narakin' -> Merlin: 'අයියෝ මොකද වුණේ? ඇයි සනීප නැද්ද, නැත්නම් වෙන අවුලක්ද?'\n"
-            "   - User: 'oyage nama mokakda' -> Merlin: 'මගේ නම මර්ලින් AI! ඔයාට ඕනම දෙයකට උදව් කරන්න මම ලෑස්තියි.'\n"
-            "   - User: 'komada jiwithe' -> Merlin: 'මගේ වැඩ ටික හොඳින් යනවා! ඔයාගේ විස්තර කොහොමද?'\n"
-            "6. ENGLISH: If user speaks pure English, reply in natural English."
+            "You are Merlin AI, a helpful, friendly Sri Lankan AI assistant created by Infinity Wave.\n"
+            "If the user talks in Sinhala or Singlish, reply ONLY in simple, friendly, natural everyday spoken Sinhala (නියම කතා කරන සිංහලෙන්).\n"
+            "Use natural casual Sri Lankan words like 'මම', 'ඔයා', 'මචං', 'අවුලක් නෑ', 'මොකක්ද වෙන්න ඕන'.\n"
+            "STRICTLY NEVER use formal/robotic words like 'ඔබ', 'ඔබගේ', 'මෘදුකාංගයක්', 'තිබෙනවා', 'සංවාදය'. Keep it natural like chatting with a friend."
         )
     }
 
+    # Keep only the last 6 messages to avoid Rate Limit errors
+    limited_history = history[-6:] if len(history) > 6 else history
+
     messages = [system_prompt]
-    for h in history:
+    for h in limited_history:
         messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
     
     messages.append({"role": "user", "content": user_message})
@@ -479,7 +468,7 @@ async def chat(request: Request):
             json={
                 "model": "llama-3.3-70b-versatile",
                 "messages": messages,
-                "temperature": 0.4,
+                "temperature": 0.6,
             },
             timeout=25
         )
@@ -488,6 +477,6 @@ async def chat(request: Request):
         if "choices" in res_json and len(res_json["choices"]) > 0:
             return {"reply": res_json["choices"][0]["message"]["content"]}
         else:
-            return {"reply": f"Groq Error: {res_json}"}
+            return {"reply": "Groq එකේ limit පැනලා වගේ මචං, පොඩ්ඩක් ඉඳලා try කරන්න."}
     except Exception as e:
         return {"reply": f"Error: {str(e)}"}
