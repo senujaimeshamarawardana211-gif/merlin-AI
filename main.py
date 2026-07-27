@@ -258,7 +258,6 @@ async def read_root():
             let chats = JSON.parse(localStorage.getItem("merlin_chats")) || {};
             let currentChatId = null;
 
-            // List of Random Greetings
             const greetings = [
                 "What's on your mind?",
                 "Your move.",
@@ -292,7 +291,7 @@ async def read_root():
                     title: "New Conversation", 
                     history: [], 
                     messages: [],
-                    greeting: getRandomGreeting() // Assign random greeting per chat session
+                    greeting: getRandomGreeting()
                 };
                 saveToStorage();
                 renderHistory();
@@ -358,10 +357,12 @@ async def read_root():
                     const displayGreeting = chat.greeting || getRandomGreeting();
                     const welcomeDiv = document.createElement("div");
                     welcomeDiv.className = "welcome-container";
-                    welcomeDiv.innerHTML = `
-                        <div class="welcome-title">\${displayGreeting}</div>
-                        <div class="welcome-subtitle">Ask Merlin anything to get started...</div>
-                    `;
+                    
+                    // Plain string concatenation to prevent string interpolation bugs
+                    welcomeDiv.innerHTML = 
+                        '<div class="welcome-title">' + displayGreeting + '</div>' +
+                        '<div class="welcome-subtitle">Ask Merlin anything to get started...</div>';
+                        
                     chatBox.appendChild(welcomeDiv);
                     return;
                 }
