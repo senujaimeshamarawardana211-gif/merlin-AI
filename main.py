@@ -582,7 +582,6 @@ async def chat(request: Request):
             )
         }
 
-        # Save tokens by only sending the last conversation turn
         limited_history = history[-2:] if len(history) > 2 else history
 
         messages = [system_prompt]
@@ -591,32 +590,35 @@ async def chat(request: Request):
         
         messages.append({"role": "user", "content": user_message})
 
-        # ACTIVE MODEL ON GROQ (llama-3.3-70b-versatile)
-        response = requests.post(
-            url="https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {GROQ_API_KEY.strip()}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "llama-3.3-70b-versatile",
-                "messages": messages,
-                "temperature": 0.3,
-                "max_tokens": 800
-            },
-            timeout=30
-        )
-        
-        res_json = response.json()
+        # --- AUTO FALLBACK (70B -> 8B IF RATE LIMITED) ---
+        models_to_try = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
 
-        if "error" in res_json:
-            error_msg = res_json["error"].get("message", "Unknown error")
-            return {"reply": f"Groq error: {error_msg}"}
+        for model_name in models_to_try:
+            response = requests.post(
+                url="https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY.strip()}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model_name,
+                    "messages": messages,
+                    "temperature": 0.3,
+                    "max_tokens": 800
+                },
+                timeout=30
+            )
+            
+            res_json = response.json()
 
-        if "choices" in res_json and len(res_json["choices"]) > 0:
-            return {"reply": res_json["choices"][0]["message"]["content"]}
-        else:
-            return {"reply": "No response received from Groq."}
+            # If rate-limited or model fails, automatically loop to the 8b model
+            if "error" in res_json:
+                continue 
+
+            if "choices" in res_json and len(res_json["choices"]) > 0:
+                return {"reply": res_json["choices"][0]["message"]["content"]}
+
+        return {"reply": "Sorry, server is currently busy. Please try again in a minute."}
 
     except requests.exceptions.Timeout:
         return {"reply": "Connection timeout, please check your internet and try again."}
