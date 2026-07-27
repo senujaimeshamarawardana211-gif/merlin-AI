@@ -570,18 +570,19 @@ async def chat(request: Request):
             else:
                 return {"reply": random.choice(general_options)}
 
-        # --- SYSTEM PROMPT (ACCURATE & NATURAL SINHALA) ---
+        # --- SYSTEM PROMPT ---
         system_prompt = {
             "role": "system",
             "content": (
                 "You are Merlin AI, an intelligent assistant created by Infinity Wave.\n"
-                "1. Direct response: Answer cleanly and directly without repeating system rules.\n"
-                "2. Transliteration safety: Correctly identify transliterated terms (e.g., 'mari curie' / 'mari cury' is Marie Curie the famous scientist, NOT food 'curry').\n"
-                "3. Sinhala response: Use high quality, grammatically correct natural Sinhala when queried in Sinhala/Singlish.\n"
-                "4. Casual friendly tone for greetings and thanks ('You're welcome machan!' / 'ඕන වෙලාවක කියන්න මචං!')."
+                "1. Answer direct questions straight away.\n"
+                "2. Transliteration safety: Correctly identify transliterated terms (e.g., 'mari curie' is Marie Curie the scientist, NOT 'curry').\n"
+                "3. Use standard, high-quality Sinhala when spoken to in Sinhala.\n"
+                "4. Be friendly and natural."
             )
         }
 
+        # Save tokens by only sending the last conversation turn
         limited_history = history[-2:] if len(history) > 2 else history
 
         messages = [system_prompt]
@@ -590,7 +591,7 @@ async def chat(request: Request):
         
         messages.append({"role": "user", "content": user_message})
 
-        # MIXTRAL 8X7B MODEL (500,000 TPD LIMIT)
+        # ACTIVE MODEL ON GROQ (llama-3.3-70b-versatile)
         response = requests.post(
             url="https://api.groq.com/openai/v1/chat/completions",
             headers={
@@ -598,10 +599,10 @@ async def chat(request: Request):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "mixtral-8x7b-32768",
+                "model": "llama-3.3-70b-versatile",
                 "messages": messages,
                 "temperature": 0.3,
-                "max_tokens": 1000
+                "max_tokens": 800
             },
             timeout=30
         )
