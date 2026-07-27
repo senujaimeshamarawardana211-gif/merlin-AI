@@ -23,19 +23,24 @@ async def read_root():
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <title>Merlin AI</title>
         <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
         <style>
             * { box-sizing: border-box; }
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            html, body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
                 background-color: #0b1329;
                 color: #f8fafc;
-                margin: 0;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            }
+            
+            body {
                 display: flex;
-                height: 100vh;
-                overflow: hidden;
+                height: 100dvh; /* Mobile screen dynamic viewport height */
                 position: relative;
             }
             
@@ -50,6 +55,7 @@ async def read_root():
                 gap: 12px;
                 transition: transform 0.3s ease;
                 z-index: 100;
+                height: 100%;
             }
             .sidebar-header {
                 font-size: 18px;
@@ -117,14 +123,14 @@ async def read_root():
                 color: #f8fafc;
             }
             .delete-chat-btn {
-                opacity: 0;
+                opacity: 0.7;
                 color: #ef4444;
-                font-size: 12px;
+                font-size: 14px;
                 border: none;
                 background: none;
                 cursor: pointer;
+                padding: 4px;
             }
-            .history-item:hover .delete-chat-btn { opacity: 1; }
 
             /* Overlay background when mobile menu is open */
             .sidebar-overlay {
@@ -143,8 +149,9 @@ async def read_root():
                 flex: 1;
                 display: flex;
                 flex-direction: column;
-                height: 100vh;
+                height: 100%;
                 width: 100%;
+                min-width: 0; /* Prevents overflow bugs */
             }
             
             /* Header */
@@ -158,6 +165,7 @@ async def read_root():
                 background-color: #0f172a;
                 border-bottom: 1px solid #1e293b;
                 color: #38bdf8;
+                flex-shrink: 0;
             }
             .menu-toggle-btn {
                 display: none;
@@ -166,7 +174,7 @@ async def read_root():
                 color: #38bdf8;
                 font-size: 24px;
                 cursor: pointer;
-                padding: 0 8px;
+                padding: 0 4px;
             }
 
             .chat-box {
@@ -189,7 +197,7 @@ async def read_root():
                 padding: 20px;
             }
             .welcome-title {
-                font-size: 28px;
+                font-size: 26px;
                 font-weight: 700;
                 background: linear-gradient(135deg, #38bdf8, #818cf8);
                 -webkit-background-clip: text;
@@ -240,26 +248,32 @@ async def read_root():
                 border-radius: 8px;
                 overflow-x: auto;
             }
+            
+            /* Input Area Fixed for Mobile */
             .input-area {
                 display: flex;
-                padding: 12px 16px;
+                padding: 12px;
                 background-color: #0f172a;
                 border-top: 1px solid #1e293b;
                 gap: 8px;
+                flex-shrink: 0; /* Prevents input bar from squishing or dropping */
+                position: relative;
+                z-index: 10;
             }
             input {
                 flex: 1;
-                padding: 12px 16px;
+                padding: 12px 14px;
                 border: 1px solid #1e293b;
                 border-radius: 12px;
                 background-color: #020617;
                 color: #ffffff;
                 font-size: 15px;
                 outline: none;
+                min-width: 0;
             }
             input:focus { border-color: #38bdf8; }
             button.send-btn {
-                padding: 12px 20px;
+                padding: 12px 18px;
                 background: linear-gradient(135deg, #38bdf8, #2563eb);
                 color: white;
                 border: none;
@@ -267,6 +281,7 @@ async def read_root():
                 cursor: pointer;
                 font-weight: 600;
                 font-size: 15px;
+                flex-shrink: 0;
             }
             .dots span {
                 animation: blink 1.4s infinite fill-mode;
@@ -282,7 +297,7 @@ async def read_root():
                     position: fixed;
                     top: 0;
                     left: 0;
-                    height: 100vh;
+                    height: 100dvh;
                     width: 280px;
                     transform: translateX(-100%);
                 }
@@ -302,7 +317,7 @@ async def read_root():
                     max-width: 90%;
                 }
                 .welcome-title {
-                    font-size: 24px;
+                    font-size: 22px;
                 }
             }
         </style>
@@ -324,7 +339,7 @@ async def read_root():
             <div class="header">
                 <button class="menu-toggle-btn" onclick="toggleSidebar()">☰</button>
                 <span>🧙‍♂️ MERLIN AI</span>
-                <div style="width: 32px;"></div> <!-- Placeholder to center text -->
+                <div style="width: 32px;"></div>
             </div>
             <div class="chat-box" id="chatBox"></div>
             <div class="input-area">
