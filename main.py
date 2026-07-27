@@ -543,11 +543,21 @@ async def chat(request: Request):
         if not GROQ_API_KEY:
             return {"reply": "මචං Vercel එකේ GROQ_API_KEY එක Missing වගේ! පොඩ්ඩක් Check කරන්න."}
 
-        # --- GREETINGS INTERCEPT ---
+        # --- GREETINGS & GOODNIGHT INTERCEPT ---
         clean_msg = user_message.lower().strip("!.,? ")
         greeting_words = ["hi", "hello", "hey", "good evening", "good morning", "good afternoon"]
+        farewell_words = ["good night", "gn", "bye", "goodnight", "sweet dreams", "bye good night"]
 
         is_greeting = any(word in clean_msg for word in greeting_words) and len(clean_msg.split()) <= 4
+        is_farewell = any(word in clean_msg for word in farewell_words) and len(clean_msg.split()) <= 4
+
+        if is_farewell:
+            farewell_options = [
+                "Good night! Sleep well! 🌙",
+                "Good night! Sweet dreams! 🌙",
+                "සුබ රාත්‍රියක්! හොඳට නිදාගන්න! 🌙"
+            ]
+            return {"reply": random.choice(farewell_options)}
 
         if is_greeting:
             evening_options = [
@@ -611,7 +621,6 @@ async def chat(request: Request):
             
             res_json = response.json()
 
-            # If rate-limited or model fails, automatically loop to the 8b model
             if "error" in res_json:
                 continue 
 
