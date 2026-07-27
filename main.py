@@ -40,7 +40,7 @@ async def read_root():
             
             body {
                 display: flex;
-                height: 100dvh; /* Mobile screen dynamic viewport height */
+                height: 100dvh;
                 position: relative;
             }
             
@@ -132,7 +132,6 @@ async def read_root():
                 padding: 4px;
             }
 
-            /* Overlay background when mobile menu is open */
             .sidebar-overlay {
                 display: none;
                 position: fixed;
@@ -151,7 +150,7 @@ async def read_root():
                 flex-direction: column;
                 height: 100%;
                 width: 100%;
-                min-width: 0; /* Prevents overflow bugs */
+                min-width: 0;
             }
             
             /* Header */
@@ -249,14 +248,14 @@ async def read_root():
                 overflow-x: auto;
             }
             
-            /* Input Area Fixed for Mobile */
+            /* Input Area */
             .input-area {
                 display: flex;
                 padding: 12px;
                 background-color: #0f172a;
                 border-top: 1px solid #1e293b;
                 gap: 8px;
-                flex-shrink: 0; /* Prevents input bar from squishing or dropping */
+                flex-shrink: 0;
                 position: relative;
                 z-index: 10;
             }
@@ -291,7 +290,6 @@ async def read_root():
             .dots span:nth-child(3) { animation-delay: .4s; }
             @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
 
-            /* Mobile Responsive Adjustments */
             @media (max-width: 768px) {
                 .sidebar {
                     position: fixed;
@@ -540,32 +538,36 @@ async def read_root():
 
 @app.post("/chat")
 async def chat(request: Request):
-    data = await request.json()
-    user_message = data.get("message", "")
-    history = data.get("history", [])
-
-    if not GROQ_API_KEY:
-        return {"reply": "Error: GROQ_API_KEY missing in Vercel Environment Variables!"}
-
-    system_prompt = {
-        "role": "system",
-        "content": (
-            "You are Merlin AI, a helpful, friendly Sri Lankan AI assistant created by Infinity Wave.\n"
-            "If the user talks in Sinhala or Singlish, reply ONLY in simple, friendly, natural everyday spoken Sinhala (නියම කතා කරන සිංහලෙන්).\n"
-            "Use natural casual Sri Lankan words like 'මම', 'ඔයා', 'මචං', 'අවුලක් නෑ', 'මොකක්ද වෙන්න ඕන'.\n"
-            "STRICTLY NEVER use formal/robotic words like 'ඔබ', 'ඔබගේ', 'මෘදුකාංගයක්', 'තිබෙනවා', 'සංවාදය'. Keep it natural like chatting with a friend."
-        )
-    }
-
-    limited_history = history[-6:] if len(history) > 6 else history
-
-    messages = [system_prompt]
-    for h in limited_history:
-        messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
-    
-    messages.append({"role": "user", "content": user_message})
-
     try:
+        data = await request.json()
+        user_message = data.get("message", "")
+        history = data.get("history", [])
+
+        if not GROQ_API_KEY:
+            return {"reply": "මචං Vercel එකේ GROQ_API_KEY එක Missing වගේ! පොඩ්ඩක් Check කරන්න."}
+
+        system_prompt = {
+            "role": "system",
+            "content": (
+                "You are Merlin AI, a friendly Sri Lankan AI assistant created by Infinity Wave.\n"
+                "CRITICAL LANGUAGE INSTRUCTIONS:\n"
+                "1. If user speaks in Singlish or Sinhala, reply ONLY in simple, casual, everyday spoken Sinhala (නියම කතා කරන සිංහලෙන්) OR natural Singlish.\n"
+                "2. STRICTLY NEVER USE direct/literal machine translations! Forbidden examples:\n"
+                "   - Never say 'පරීක්ෂණේ' for exam -> Say 'Exam එක' or 'විභාගය'.\n"
+                "   - Never say 'ආදම් කරන්න' for study/rest -> Say 'පාඩම් කරන්න' or 'Rest කරන්න'.\n"
+                "   - Never say 'මචං යනවා' when someone says bye -> Say 'එළ මචං, පරිස්සමෙන්! Good luck!'.\n"
+                "3. Chat like a real Sri Lankan friend on WhatsApp using words like 'එළ මචං', 'අවුලක් නෑ', 'සුපිරි'."
+            )
+        }
+
+        limited_history = history[-6:] if len(history) > 6 else history
+
+        messages = [system_prompt]
+        for h in limited_history:
+            messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+        
+        messages.append({"role": "user", "content": user_message})
+
         response = requests.post(
             url="https://api.groq.com/openai/v1/chat/completions",
             headers={
@@ -573,17 +575,26 @@ async def chat(request: Request):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama-3.3-70b-versatile",
+                "model": "qwen-2.5-72b",
                 "messages": messages,
                 "temperature": 0.6,
+                "max_tokens": 800
             },
-            timeout=25
+            timeout=20
         )
-        res_json = response.json()
         
+        res_json = response.json()
+
+        if "error" in res_json:
+            error_msg = res_json["error"].get("message", "Unknown error")
+            return {"reply": f"Groq එකෙන් පොඩි අවුලක් ආවා මචං: {error_msg}"}
+
         if "choices" in res_json and len(res_json["choices"]) > 0:
             return {"reply": res_json["choices"][0]["message"]["content"]}
         else:
-            return {"reply": "Groq එකේ limit පැනලා වගේ මචං, පොඩ්ඩක් ඉඳලා try කරන්න."}
+            return {"reply": "Groq එකෙන් Response එකක් ආවේ නෑ මචං, පොඩ්ඩක් ආයේ Try කරන්න."}
+
+    except requests.exceptions.Timeout:
+        return {"reply": "Connection එක Timeout වුණා මචං, Internet එක Check කරලා ආයේ යවන්න."}
     except Exception as e:
-        return {"reply": f"Error: {str(e)}"}
+        return {"reply": "පොඩි Technical අවුලක් ආවා මචං, ආයේ Try කරලා බලන්න."}
