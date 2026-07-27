@@ -542,15 +542,15 @@ async def chat(request: Request):
         if not GROQ_API_KEY:
             return {"reply": "මචං Vercel එකේ GROQ_API_KEY එක Missing වගේ! පොඩ්ඩක් Check කරන්න."}
 
-        # --- GREETINGS INTERCEPT (NO GOOGLE TRANSLATE NONSENSE) ---
+        # --- GREETINGS INTERCEPT (EXACT & ACCURATE RESPONSES) ---
         clean_msg = user_message.lower().strip("!.,? ")
         greeting_keywords = ["hi", "hello", "hey", "good evening", "good morning", "good afternoon"]
 
         if clean_msg in greeting_keywords:
             if "evening" in clean_msg:
-                return {"reply": "Good evening! How can I assist you tonight? 🌙\n\nසුබ සැන්දෑවක්! අද රෑ මට ඔයාට කොහොමද උදව් කරන්නේ?"}
+                return {"reply": "Good evening! I am Merlin AI. How can I assist you tonight? 🌙\n\nසුබ සැන්දෑවක්! මම Merlin AI. අද රෑ මට ඔයාට කොහොමද උදව් කරන්නේ?"}
             elif "morning" in clean_msg:
-                return {"reply": "Good morning! How can I help you today? ☀️\n\nසුබ උදෑසනක්! අද මට ඔයාට කොහොමද උදව් කරන්නේ?"}
+                return {"reply": "Good morning! I am Merlin AI. How can I help you today? ☀️\n\nසුබ උදෑසනක්! මම Merlin AI. අද මට ඔයාට කොහොමද උදව් කරන්නේ?"}
             else:
                 return {"reply": "Hi! I am Merlin AI. How can I assist you today? 👋\n\nසුබ දවසක්! මම Merlin AI. අද මට ඔයාට කොහොමද උදව් කරන්නේ?"}
 
