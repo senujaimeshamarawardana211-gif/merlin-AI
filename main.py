@@ -543,7 +543,7 @@ async def chat(request: Request):
         if not GROQ_API_KEY:
             return {"reply": "මචං Vercel එකේ GROQ_API_KEY එක Missing වගේ! පොඩ්ඩක් Check කරන්න."}
 
-        # --- GREETINGS INTERCEPT (DYNAMIC RANDOM RESPONSES - ENGLISH ONLY) ---
+        # --- GREETINGS INTERCEPT ---
         clean_msg = user_message.lower().strip("!.,? ")
         greeting_words = ["hi", "hello", "hey", "good evening", "good morning", "good afternoon"]
 
@@ -552,17 +552,14 @@ async def chat(request: Request):
         if is_greeting:
             evening_options = [
                 "Good evening! I am Merlin AI. How can I assist you today? 🌙",
-                "Good evening! I am Merlin AI. What's the vibe tonight? 🌙",
-                "Good evening! I am Merlin AI. How can I help you tonight? 🌙"
+                "Good evening! I am Merlin AI. What's the vibe tonight? 🌙"
             ]
             morning_options = [
                 "Good morning! I am Merlin AI. How can I assist you today? ☀️",
-                "Good morning! I am Merlin AI. What's the vibe today? ☀️",
                 "Good morning! I am Merlin AI. Ready to start the day? ☀️"
             ]
             general_options = [
                 "Hi! I am Merlin AI. How can I assist you today? 👋",
-                "Hi! I am Merlin AI. What's the vibe? 👋",
                 "Hey! I am Merlin AI. How can I help you today? 👋"
             ]
 
@@ -573,27 +570,25 @@ async def chat(request: Request):
             else:
                 return {"reply": random.choice(general_options)}
 
-        # --- ADVANCED SYSTEM PROMPT (NATURAL SPOKEN SINHALA & COMPLETE RESPONSES) ---
+        # --- ADVANCED SYSTEM PROMPT (NATURAL SINHALA) ---
         system_prompt = {
             "role": "system",
             "content": (
                 "You are Merlin AI, an intelligent AI assistant created by Infinity Wave.\n\n"
                 "CRITICAL LANGUAGE RULE - NATURAL SPOKEN SINHALA:\n"
-                "1. Always write in SINHALA SCRIPT/LETTERS (සිංහල අකුරින්) for general responses.\n"
+                "1. Always write in SINHALA SCRIPT/LETTERS (සිංහල අකුරින්).\n"
                 "2. ALWAYS use Natural Spoken/Casual Modern Sinhala (කතාබහ කරන සාමාන්‍ය සිංහල).\n"
                 "3. ABSOLUTELY FORBIDDEN ARCHAIC/OLD SINHALA ENDINGS:\n"
                 "   - DO NOT use words like 'ගියෝ', 'සිටියෝ', 'බේරුණෝ', 'කළෝය', 'වන්නේය', 'ලබා ගත්තාය'.\n"
-                "   - Instead use modern spoken forms like 'ගියා', 'හිටියා', 'බේරුණා', 'කළා', 'ලබාගත්තා'.\n"
-                "4. Speak like a close, friendly Sri Lankan friend ('මචං' style where appropriate).\n\n"
-                "COMPLETENESS & ACCURACY RULE:\n"
-                "- NEVER cut off sentences mid-way. Always complete your full response thoroughly.\n"
-                "- When answering historical/biographical queries, provide complete and accurate details from childhood to adult achievements.\n\n"
-                "FORMATTING RULES:\n"
-                "Use bullet points and clear line breaks to structure long information cleanly."
+                "   - Instead use natural words like 'ගියා', 'හිටියා', 'බේරුණා', 'කළා', 'ලබාගත්තා'.\n"
+                "4. Speak naturally like a close Sri Lankan friend ('මචං' style where appropriate).\n\n"
+                "COMPLETENESS RULE:\n"
+                "- Provide direct, fully completed responses without cutting off mid-sentence."
             )
         }
 
-        limited_history = history[-6:] if len(history) > 6 else history
+        # Keep history to last 4 messages to stay safely below daily token limits
+        limited_history = history[-4:] if len(history) > 4 else history
 
         messages = [system_prompt]
         for h in limited_history:
@@ -608,12 +603,12 @@ async def chat(request: Request):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama-3.3-70b-versatile",
+                "model": "llama3-8b-8192",  # 500,000 Tokens/day limit
                 "messages": messages,
                 "temperature": 0.2,
-                "max_tokens": 2000  # Token limit increased to 2000 to prevent response cut-offs
+                "max_tokens": 1200
             },
-            timeout=25
+            timeout=20
         )
         
         res_json = response.json()
