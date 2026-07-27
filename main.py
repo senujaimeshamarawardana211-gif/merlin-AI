@@ -543,7 +543,7 @@ async def chat(request: Request):
         if not GROQ_API_KEY:
             return {"reply": "මචං Vercel එකේ GROQ_API_KEY එක Missing වගේ! පොඩ්ඩක් Check කරන්න."}
 
-        # --- GREETINGS INTERCEPT (DYNAMIC RANDOM RESPONSES) ---
+        # --- GREETINGS INTERCEPT (DYNAMIC RANDOM RESPONSES - ENGLISH ONLY) ---
         clean_msg = user_message.lower().strip("!.,? ")
         greeting_words = ["hi", "hello", "hey", "good evening", "good morning", "good afternoon"]
 
@@ -573,27 +573,26 @@ async def chat(request: Request):
             else:
                 return {"reply": random.choice(general_options)}
 
-        # --- ADVANCED SYSTEM PROMPT (FIXES SINGLISH & REAL WORLD FACTS) ---
-     # --- ADVANCED SYSTEM PROMPT (STRICT SINGLISH ONLY) ---
-      # --- ADVANCED SYSTEM PROMPT (NATURAL SINHALA ONLY) ---
+        # --- ADVANCED SYSTEM PROMPT (NATURAL SPOKEN SINHALA & COMPLETE RESPONSES) ---
         system_prompt = {
             "role": "system",
             "content": (
                 "You are Merlin AI, an intelligent AI assistant created by Infinity Wave.\n\n"
                 "CRITICAL LANGUAGE RULE - NATURAL SPOKEN SINHALA:\n"
-                "1. You MUST ALWAYS respond in SINHALA LETTERS (සිංහල අකුරින් පමණි).\n"
-                "2. ALWAYS use Natural Spoken/Casual Sinhala (කතාබහ කරන සාමාන්‍ය සිංහල). Speak naturally like a friendly Sri Lankan friend.\n"
-                "3. ABSOLUTELY FORBIDDEN WRITTEN/OLD SINHALA FORMS:\n"
-                "   - DO NOT use archaic/literary endings like 'ගියෝ', 'සිටියෝ', 'බේරුණෝ', 'කළෝය', 'වන්නේය', 'වේ'.\n"
-                "   - Instead use natural modern words like 'ගියා', 'හිටියා', 'බේරුණා', 'කළා', 'වෙනවා'.\n"
-                "4. Understand user input correctly (e.g. 'gilichcha nawa' = ගිලුණු නැව / shipwreck). If user clarifies they mean the REAL Titanic ship, DO NOT talk about the movie or songs.\n\n"
-                "EXAMPLES OF YOUR VOICE:\n"
-                "- 'මචං, ටයිටැනික් කියන්නේ 1912 දී ගිලුණු ඇත්තම නැවක්.'\n"
-                "- 'ඒකේ 2200ක් විතර හිටියා, ගිලෙද්දී 1500කට වඩා නැති වුණා, 700ක් විතර තමයි බේරුණේ.'\n\n"
+                "1. Always write in SINHALA SCRIPT/LETTERS (සිංහල අකුරින්) for general responses.\n"
+                "2. ALWAYS use Natural Spoken/Casual Modern Sinhala (කතාබහ කරන සාමාන්‍ය සිංහල).\n"
+                "3. ABSOLUTELY FORBIDDEN ARCHAIC/OLD SINHALA ENDINGS:\n"
+                "   - DO NOT use words like 'ගියෝ', 'සිටියෝ', 'බේරුණෝ', 'කළෝය', 'වන්නේය', 'ලබා ගත්තාය'.\n"
+                "   - Instead use modern spoken forms like 'ගියා', 'හිටියා', 'බේරුණා', 'කළා', 'ලබාගත්තා'.\n"
+                "4. Speak like a close, friendly Sri Lankan friend ('මචං' style where appropriate).\n\n"
+                "COMPLETENESS & ACCURACY RULE:\n"
+                "- NEVER cut off sentences mid-way. Always complete your full response thoroughly.\n"
+                "- When answering historical/biographical queries, provide complete and accurate details from childhood to adult achievements.\n\n"
                 "FORMATTING RULES:\n"
-                "Use bullet points and clear line breaks so it is simple and readable."
+                "Use bullet points and clear line breaks to structure long information cleanly."
             )
         }
+
         limited_history = history[-6:] if len(history) > 6 else history
 
         messages = [system_prompt]
@@ -612,9 +611,9 @@ async def chat(request: Request):
                 "model": "llama-3.3-70b-versatile",
                 "messages": messages,
                 "temperature": 0.2,
-                "max_tokens": 800
+                "max_tokens": 2000  # Token limit increased to 2000 to prevent response cut-offs
             },
-            timeout=20
+            timeout=25
         )
         
         res_json = response.json()
