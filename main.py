@@ -36,7 +36,10 @@ async def read_root():
                 display: flex;
                 height: 100vh;
                 overflow: hidden;
+                position: relative;
             }
+            
+            /* Sidebar Styling */
             .sidebar {
                 width: 260px;
                 background-color: #0f172a;
@@ -45,6 +48,8 @@ async def read_root():
                 flex-direction: column;
                 padding: 16px;
                 gap: 12px;
+                transition: transform 0.3s ease;
+                z-index: 100;
             }
             .sidebar-header {
                 font-size: 18px;
@@ -52,9 +57,17 @@ async def read_root():
                 color: #38bdf8;
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                justify-content: space-between;
                 padding-bottom: 12px;
                 border-bottom: 1px solid #1e293b;
+            }
+            .close-sidebar-btn {
+                display: none;
+                background: none;
+                border: none;
+                color: #94a3b8;
+                font-size: 20px;
+                cursor: pointer;
             }
             .new-chat-btn {
                 background: linear-gradient(135deg, #0284c7, #2563eb);
@@ -113,25 +126,53 @@ async def read_root():
             }
             .history-item:hover .delete-chat-btn { opacity: 1; }
 
+            /* Overlay background when mobile menu is open */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 90;
+            }
+
+            /* Main Content Area */
             .main-content {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
                 height: 100vh;
+                width: 100%;
             }
+            
+            /* Header */
             .header {
-                text-align: center;
-                padding: 16px;
-                font-size: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 16px;
+                font-size: 18px;
                 font-weight: 700;
                 background-color: #0f172a;
                 border-bottom: 1px solid #1e293b;
                 color: #38bdf8;
             }
+            .menu-toggle-btn {
+                display: none;
+                background: none;
+                border: none;
+                color: #38bdf8;
+                font-size: 24px;
+                cursor: pointer;
+                padding: 0 8px;
+            }
+
             .chat-box {
                 flex: 1;
                 overflow-y: auto;
-                padding: 20px;
+                padding: 16px;
                 display: flex;
                 flex-direction: column;
                 gap: 16px;
@@ -148,7 +189,7 @@ async def read_root():
                 padding: 20px;
             }
             .welcome-title {
-                font-size: 32px;
+                font-size: 28px;
                 font-weight: 700;
                 background: linear-gradient(135deg, #38bdf8, #818cf8);
                 -webkit-background-clip: text;
@@ -156,15 +197,15 @@ async def read_root():
                 margin-bottom: 8px;
             }
             .welcome-subtitle {
-                font-size: 16px;
+                font-size: 14px;
                 color: #64748b;
             }
 
             .message {
-                max-width: 82%;
-                padding: 14px 18px;
+                max-width: 85%;
+                padding: 12px 16px;
                 border-radius: 16px;
-                line-height: 1.6;
+                line-height: 1.5;
                 font-size: 15px;
                 word-wrap: break-word;
                 box-shadow: 0 4px 6px -1px rgba(0,0,0,0.25);
@@ -201,14 +242,14 @@ async def read_root():
             }
             .input-area {
                 display: flex;
-                padding: 16px;
+                padding: 12px 16px;
                 background-color: #0f172a;
                 border-top: 1px solid #1e293b;
-                gap: 10px;
+                gap: 8px;
             }
             input {
                 flex: 1;
-                padding: 14px 18px;
+                padding: 12px 16px;
                 border: 1px solid #1e293b;
                 border-radius: 12px;
                 background-color: #020617;
@@ -218,7 +259,7 @@ async def read_root():
             }
             input:focus { border-color: #38bdf8; }
             button.send-btn {
-                padding: 14px 24px;
+                padding: 12px 20px;
                 background: linear-gradient(135deg, #38bdf8, #2563eb);
                 color: white;
                 border: none;
@@ -234,18 +275,57 @@ async def read_root():
             .dots span:nth-child(2) { animation-delay: .2s; }
             .dots span:nth-child(3) { animation-delay: .4s; }
             @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
+
+            /* Mobile Responsive Adjustments */
+            @media (max-width: 768px) {
+                .sidebar {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    height: 100vh;
+                    width: 280px;
+                    transform: translateX(-100%);
+                }
+                .sidebar.open {
+                    transform: translateX(0);
+                }
+                .sidebar-overlay.active {
+                    display: block;
+                }
+                .menu-toggle-btn {
+                    display: block;
+                }
+                .close-sidebar-btn {
+                    display: block;
+                }
+                .message {
+                    max-width: 90%;
+                }
+                .welcome-title {
+                    font-size: 24px;
+                }
+            }
         </style>
     </head>
     <body>
-        <div class="sidebar">
-            <div class="sidebar-header">🧙‍♂️ Merlin AI</div>
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span>🧙‍♂️ Merlin AI</span>
+                <button class="close-sidebar-btn" onclick="closeSidebar()">✕</button>
+            </div>
             <button class="new-chat-btn" onclick="startNewChat()">+ New Chat</button>
             <div class="history-title">Recent Chats</div>
             <div class="history-list" id="historyList"></div>
         </div>
 
         <div class="main-content">
-            <div class="header">🧙‍♂️ MERLIN AI</div>
+            <div class="header">
+                <button class="menu-toggle-btn" onclick="toggleSidebar()">☰</button>
+                <span>🧙‍♂️ MERLIN AI</span>
+                <div style="width: 32px;"></div> <!-- Placeholder to center text -->
+            </div>
             <div class="chat-box" id="chatBox"></div>
             <div class="input-area">
                 <input type="text" id="userInput" placeholder="Ask Merlin anything..." onkeydown="if(event.key==='Enter') sendMessage()">
@@ -268,6 +348,16 @@ async def read_root():
             function getRandomGreeting() {
                 const randomIndex = Math.floor(Math.random() * greetings.length);
                 return greetings[randomIndex];
+            }
+
+            function toggleSidebar() {
+                document.getElementById("sidebar").classList.toggle("open");
+                document.getElementById("sidebarOverlay").classList.toggle("active");
+            }
+
+            function closeSidebar() {
+                document.getElementById("sidebar").classList.remove("open");
+                document.getElementById("sidebarOverlay").classList.remove("active");
             }
 
             window.onload = function() {
@@ -295,6 +385,7 @@ async def read_root():
                 saveToStorage();
                 renderHistory();
                 renderChatMessages();
+                closeSidebar();
             }
 
             function renderHistory() {
@@ -303,7 +394,10 @@ async def read_root():
                 Object.keys(chats).reverse().forEach(id => {
                     const item = document.createElement("div");
                     item.className = "history-item " + (id === currentChatId ? "active" : "");
-                    item.onclick = () => loadChat(id);
+                    item.onclick = () => {
+                        loadChat(id);
+                        closeSidebar();
+                    };
                     
                     const span = document.createElement("span");
                     span.textContent = chats[id].title || "New Conversation";
@@ -438,7 +532,6 @@ async def chat(request: Request):
     if not GROQ_API_KEY:
         return {"reply": "Error: GROQ_API_KEY missing in Vercel Environment Variables!"}
 
-    # Simplified system prompt for natural everyday spoken Sinhala
     system_prompt = {
         "role": "system",
         "content": (
@@ -449,7 +542,6 @@ async def chat(request: Request):
         )
     }
 
-    # Keep only the last 6 messages to avoid Rate Limit errors
     limited_history = history[-6:] if len(history) > 6 else history
 
     messages = [system_prompt]
