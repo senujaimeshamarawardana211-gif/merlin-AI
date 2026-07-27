@@ -536,26 +536,35 @@ async def read_root():
 async def chat(request: Request):
     try:
         data = await request.json()
-        user_message = data.get("message", "")
+        user_message = data.get("message", "").strip()
         history = data.get("history", [])
 
         if not GROQ_API_KEY:
             return {"reply": "මචං Vercel එකේ GROQ_API_KEY එක Missing වගේ! පොඩ්ඩක් Check කරන්න."}
 
+        # --- GREETINGS INTERCEPT (NO GOOGLE TRANSLATE NONSENSE) ---
+        clean_msg = user_message.lower().strip("!.,? ")
+        greeting_keywords = ["hi", "hello", "hey", "good evening", "good morning", "good afternoon"]
+
+        if clean_msg in greeting_keywords:
+            if "evening" in clean_msg:
+                return {"reply": "Good evening! How can I assist you tonight? 🌙\n\nසුබ සැන්දෑවක්! අද රෑ මට ඔයාට කොහොමද උදව් කරන්නේ?"}
+            elif "morning" in clean_msg:
+                return {"reply": "Good morning! How can I help you today? ☀️\n\nසුබ උදෑසනක්! අද මට ඔයාට කොහොමද උදව් කරන්නේ?"}
+            else:
+                return {"reply": "Hi! I am Merlin AI. How can I assist you today? 👋\n\nසුබ දවසක්! මම Merlin AI. අද මට ඔයාට කොහොමද උදව් කරන්නේ?"}
+
+        # --- SYSTEM PROMPT FOR OTHER QUESTIONS ---
         system_prompt = {
             "role": "system",
             "content": (
                 "You are Merlin AI, an intelligent AI assistant created by Infinity Wave.\n\n"
                 "CRITICAL LANGUAGE RULES:\n"
-                "1. NEVER use literal or broken machine Sinhala translations (e.g. NEVER use nonsense words like 'සහල්', 'බද්දල', 'ඒකල', 'සුභ ඛාතය', or end sentences with 'ලු').\n"
-                "2. ALWAYS speak in clear, natural Sinhala or Singlish used in everyday Sri Lankan conversations.\n"
-                "3. Keep responses direct, friendly, and clean.\n\n"
-                "GREETING INSTRUCTIONS:\n"
-                "If user says 'hi', 'hello', 'good evening', 'good morning', etc., reply in EXACTLY TWO SEPARATE PARAGRAPHS WITH A BLANK LINE BETWEEN THEM:\n\n"
-                "Hi! I am Merlin AI. How can I assist you today? 👋\n\n"
-                "සුබ දවසක්! මම Merlin AI. අද මට ඔයාට කොහොමද උදව් කරන්නේ?\n\n"
+                "1. NEVER use broken machine Sinhala translations (e.g. DO NOT say 'සහල්', 'බද්දල', 'ඒකල', 'සුභ ඛාතය', or end sentences with 'ලු').\n"
+                "2. ALWAYS speak in natural, everyday Sri Lankan Sinhala or Singlish.\n"
+                "3. Keep responses direct, clear, and easy to read.\n\n"
                 "MATH & STEP-BY-STEP EXPLANATIONS:\n"
-                "When solving math or explaining steps, NEVER write long continuous sentences. Always use bullet points and clear line breaks like this:\n\n"
+                "When solving math or explaining steps, NEVER write long continuous paragraphs. Always use bullet points and clear line breaks like this:\n\n"
                 "2x + 30 = 60\n\n"
                 "• 2x = 60 - 30 (දෙපැත්තෙන්ම 30ක් අඩු කළ විට)\n"
                 "• 2x = 30\n"
@@ -582,7 +591,7 @@ async def chat(request: Request):
             json={
                 "model": "llama-3.3-70b-versatile",
                 "messages": messages,
-                "temperature": 0.3,
+                "temperature": 0.2,
                 "max_tokens": 800
             },
             timeout=20
