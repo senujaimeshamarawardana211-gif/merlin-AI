@@ -135,7 +135,32 @@ async def read_root():
                 display: flex;
                 flex-direction: column;
                 gap: 16px;
+                position: relative;
             }
+            
+            /* Welcome Banner Design */
+            .welcome-container {
+                margin: auto;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .welcome-title {
+                font-size: 32px;
+                font-weight: 700;
+                background: linear-gradient(135deg, #38bdf8, #818cf8);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin-bottom: 8px;
+            }
+            .welcome-subtitle {
+                font-size: 16px;
+                color: #64748b;
+            }
+
             .message {
                 max-width: 82%;
                 padding: 14px 18px;
@@ -233,6 +258,20 @@ async def read_root():
             let chats = JSON.parse(localStorage.getItem("merlin_chats")) || {};
             let currentChatId = null;
 
+            // List of Random Greetings
+            const greetings = [
+                "What's on your mind?",
+                "Your move.",
+                "Where should we start?",
+                "How can I help you today?",
+                "Ready when you are."
+            ];
+
+            function getRandomGreeting() {
+                const randomIndex = Math.floor(Math.random() * greetings.length);
+                return greetings[randomIndex];
+            }
+
             window.onload = function() {
                 renderHistory();
                 const keys = Object.keys(chats);
@@ -249,7 +288,12 @@ async def read_root():
 
             function startNewChat() {
                 currentChatId = "chat_" + Date.now();
-                chats[currentChatId] = { title: "New Conversation", history: [], messages: [] };
+                chats[currentChatId] = { 
+                    title: "New Conversation", 
+                    history: [], 
+                    messages: [],
+                    greeting: getRandomGreeting() // Assign random greeting per chat session
+                };
                 saveToStorage();
                 renderHistory();
                 renderChatMessages();
@@ -306,7 +350,22 @@ async def read_root():
                 chatBox.innerHTML = "";
                 if (!currentChatId || !chats[currentChatId]) return;
 
-                const msgs = chats[currentChatId].messages || [];
+                const chat = chats[currentChatId];
+                const msgs = chat.messages || [];
+                
+                // If there are no messages, show the Random Greeting
+                if (msgs.length === 0) {
+                    const displayGreeting = chat.greeting || getRandomGreeting();
+                    const welcomeDiv = document.createElement("div");
+                    welcomeDiv.className = "welcome-container";
+                    welcomeDiv.innerHTML = `
+                        <div class="welcome-title">\${displayGreeting}</div>
+                        <div class="welcome-subtitle">Ask Merlin anything to get started...</div>
+                    `;
+                    chatBox.appendChild(welcomeDiv);
+                    return;
+                }
+
                 msgs.forEach(m => {
                     const div = document.createElement("div");
                     div.className = "message " + (m.role === "user" ? "user-msg" : "bot-msg");
