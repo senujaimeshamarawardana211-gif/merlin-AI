@@ -570,25 +570,19 @@ async def chat(request: Request):
             else:
                 return {"reply": random.choice(general_options)}
 
-        # --- ADVANCED SYSTEM PROMPT (NATURAL SPOKEN SINHALA) ---
+        # --- OPTIMIZED SHORT SYSTEM PROMPT FOR HIGHEST QUALITY SINHALA ---
         system_prompt = {
             "role": "system",
             "content": (
-                "You are Merlin AI, an intelligent AI assistant created by Infinity Wave.\n\n"
-                "CRITICAL LANGUAGE RULE - NATURAL SPOKEN SINHALA:\n"
-                "1. Always write in SINHALA SCRIPT/LETTERS (සිංහල අකුරින්).\n"
-                "2. ALWAYS use Natural Spoken/Casual Modern Sinhala (කතාබහ කරන සාමාන්‍ය සිංහල).\n"
-                "3. ABSOLUTELY FORBIDDEN ARCHAIC/OLD SINHALA ENDINGS:\n"
-                "   - DO NOT use words like 'ගියෝ', 'සිටියෝ', 'බේරුණෝ', 'කළෝය', 'වන්නේය', 'ලබා ගත්තාය'.\n"
-                "   - Instead use natural words like 'ගියා', 'හිටියා', 'බේරුණා', 'කළා', 'ලබාගත්තා'.\n"
-                "4. Speak naturally like a close Sri Lankan friend ('මචං' style where appropriate).\n\n"
-                "COMPLETENESS RULE:\n"
-                "- Provide direct, fully completed responses without cutting off mid-sentence."
+                "You are Merlin AI built by Infinity Wave.\n"
+                "Respond in clear, highly natural, everyday spoken Sri Lankan Sinhala (සාමාන්‍යයෙන් කතා කරන සිංහල).\n"
+                "Never use formal, weird, or translated-sounding grammar like 'ගියෝ', 'වන්නේය', 'නොවේ'.\n"
+                "Keep sentences clear and accurate."
             )
         }
 
-        # Keep history to last 4 messages to stay safely below daily token limits
-        limited_history = history[-4:] if len(history) > 4 else history
+        # Extremely tight history (last 2 messages) to save maximum tokens for 70B model
+        limited_history = history[-2:] if len(history) > 2 else history
 
         messages = [system_prompt]
         for h in limited_history:
@@ -603,12 +597,12 @@ async def chat(request: Request):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama-3.1-8b-instant",  # Updated to active modern Llama 3.1 model
+                "model": "llama-3.3-70b-versatile",  # High quality model with precise Sinhala
                 "messages": messages,
-                "temperature": 0.2,
-                "max_tokens": 1200
+                "temperature": 0.3,
+                "max_tokens": 1000
             },
-            timeout=20
+            timeout=25
         )
         
         res_json = response.json()
