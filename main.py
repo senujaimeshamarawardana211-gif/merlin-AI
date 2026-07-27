@@ -14,7 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
@@ -380,8 +380,8 @@ async def chat(request: Request):
     user_message = data.get("message", "")
     history = data.get("history", [])
 
-    if not OPENROUTER_API_KEY:
-        return {"reply": "Error: OPENROUTER_API_KEY missing in Vercel Environment Variables!"}
+    if not GROQ_API_KEY:
+        return {"reply": "Error: GROQ_API_KEY missing in Vercel Environment Variables!"}
 
     system_prompt = {
         "role": "system",
@@ -404,39 +404,25 @@ async def chat(request: Request):
     
     messages.append({"role": "user", "content": user_message})
 
-    # Free Models List (Primary + Fallbacks)
-    models = [
-        "google/gemini-2.0-flash-lite-001:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "deepseek/deepseek-r1:free",
-        "mistralai/mistral-7b-instruct:free"
-    ]
-
-    for model in models:
-        try:
-            response = requests.post(
-                url="https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {OPENROUTER_API_KEY.strip()}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": model,
-                    "messages": messages,
-                    "temperature": 0.3,
-                },
-                timeout=25
-            )
-            res_json = response.json()
-            
-            if "choices" in res_json and len(res_json["choices"]) > 0:
-                reply = res_json["choices"][0]["message"]["content"]
-                if "</thought>" in reply:
-                    reply = reply.split("</thought>")[-1].strip()
-                return {"reply": reply}
-            elif "error" in res_json:
-                continue # Try next model
-        except Exception:
-            continue # Try next model
-
-    return {"reply": "Error: All free models are currently busy or your API key is invalid. Please check your OpenRouter API Key."}
+    try:
+        response = requests.post(
+            url="https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY.strip()}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": messages,
+                "temperature": 0.3,
+            },
+            timeout=25
+        )
+        res_json = response.json()
+        
+        if "choices" in res_json and len(res_json["choices"]) > 0:
+            return {"reply": res_json["choices"][0]["message"]["content"]}
+        else:
+            return {"reply": f"Groq Error: {res_json}"}
+    except Exception as e:
+        return {"reply": f"Error: {str(e)}"}
