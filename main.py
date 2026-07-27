@@ -570,7 +570,7 @@ async def chat(request: Request):
             else:
                 return {"reply": random.choice(general_options)}
 
-        # --- ADVANCED SYSTEM PROMPT (NATURAL SINHALA) ---
+        # --- ADVANCED SYSTEM PROMPT (NATURAL SPOKEN SINHALA) ---
         system_prompt = {
             "role": "system",
             "content": (
@@ -603,7 +603,7 @@ async def chat(request: Request):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama3-8b-8192",  # 500,000 Tokens/day limit
+                "model": "llama-3.1-8b-instant",  # Updated to active modern Llama 3.1 model
                 "messages": messages,
                 "temperature": 0.2,
                 "max_tokens": 1200
