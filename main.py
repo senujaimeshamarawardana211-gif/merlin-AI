@@ -575,7 +575,7 @@ async def chat(request: Request):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "qwen-2.5-72b",
+                "model": "llama-3.3-70b-versatile",
                 "messages": messages,
                 "temperature": 0.6,
                 "max_tokens": 800
