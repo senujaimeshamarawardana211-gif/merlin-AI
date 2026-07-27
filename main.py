@@ -542,35 +542,37 @@ async def chat(request: Request):
         if not GROQ_API_KEY:
             return {"reply": "මචං Vercel එකේ GROQ_API_KEY එක Missing වගේ! පොඩ්ඩක් Check කරන්න."}
 
-        # --- GREETINGS INTERCEPT (EXACT & ACCURATE RESPONSES) ---
+        # --- GREETINGS INTERCEPT (PURE ENGLISH ONLY) ---
         clean_msg = user_message.lower().strip("!.,? ")
-        greeting_keywords = ["hi", "hello", "hey", "good evening", "good morning", "good afternoon"]
+        greeting_words = ["hi", "hello", "hey", "good evening", "good morning", "good afternoon"]
 
-        if clean_msg in greeting_keywords:
+        # User කියපු Text එකේ Greetings අඩංගුද නැතහොත් ඒ විතරක් තියෙනවද බලනවා (e.g. "hi good evening")
+        is_greeting = any(word in clean_msg for word in greeting_words) and len(clean_msg.split()) <= 4
+
+        if is_greeting:
             if "evening" in clean_msg:
-                return {"reply": "Good evening! I am Merlin AI. How can I assist you tonight? 🌙\n\nසුබ සැන්දෑවක්! මම Merlin AI. අද රෑ මට ඔයාට කොහොමද උදව් කරන්නේ?"}
+                return {"reply": "Good evening! I am Merlin AI. How can I assist you today? What's the vibe? 🌙"}
             elif "morning" in clean_msg:
-                return {"reply": "Good morning! I am Merlin AI. How can I help you today? ☀️\n\nසුබ උදෑසනක්! මම Merlin AI. අද මට ඔයාට කොහොමද උදව් කරන්නේ?"}
+                return {"reply": "Good morning! I am Merlin AI. How can I help you today? What's the vibe? ☀️"}
             else:
-                return {"reply": "Hi! I am Merlin AI. How can I assist you today? 👋\n\nසුබ දවසක්! මම Merlin AI. අද මට ඔයාට කොහොමද උදව් කරන්නේ?"}
+                return {"reply": "Hi! I am Merlin AI. How can I assist you today? What's the vibe? 👋"}
 
-        # --- SYSTEM PROMPT FOR OTHER QUESTIONS ---
+        # --- SYSTEM PROMPT FOR OTHER QUESTIONS (SINGLISH / SINHALA / ENGLISH) ---
         system_prompt = {
             "role": "system",
             "content": (
                 "You are Merlin AI, an intelligent AI assistant created by Infinity Wave.\n\n"
                 "CRITICAL LANGUAGE RULES:\n"
-                "1. NEVER use broken machine Sinhala translations (e.g. DO NOT say 'සහල්', 'බද්දල', 'ඒකල', 'සුභ ඛාතය', or end sentences with 'ලු').\n"
-                "2. ALWAYS speak in natural, everyday Sri Lankan Sinhala or Singlish.\n"
-                "3. Keep responses direct, clear, and easy to read.\n\n"
+                "1. ALWAYS respond naturally based on user language (English, Natural Sinhala, or Singlish).\n"
+                "2. NEVER use broken machine Sinhala translations (DO NOT say 'සහල්', 'බද්දල', 'ඒකල', 'සුභ ඛාතය', or end sentences with 'ලු').\n"
+                "3. Keep responses direct, clear, friendly, and easy to read.\n\n"
                 "MATH & STEP-BY-STEP EXPLANATIONS:\n"
-                "When solving math or explaining steps, NEVER write long continuous paragraphs. Always use bullet points and clear line breaks like this:\n\n"
+                "When solving math or explaining steps, ALWAYS use bullet points and clear line breaks like this:\n\n"
                 "2x + 30 = 60\n\n"
-                "• 2x = 60 - 30 (දෙපැත්තෙන්ම 30ක් අඩු කළ විට)\n"
+                "• 2x = 60 - 30\n"
                 "• 2x = 30\n"
                 "• x = 30 / 2\n"
-                "• **x = 15**\n\n"
-                "උත්තරේ **x = 15** වෙනවා මචං!"
+                "• **x = 15**"
             )
         }
 
@@ -601,14 +603,14 @@ async def chat(request: Request):
 
         if "error" in res_json:
             error_msg = res_json["error"].get("message", "Unknown error")
-            return {"reply": f"Groq එකෙන් පොඩි අවුලක් ආවා මචං: {error_msg}"}
+            return {"reply": f"Groq error: {error_msg}"}
 
         if "choices" in res_json and len(res_json["choices"]) > 0:
             return {"reply": res_json["choices"][0]["message"]["content"]}
         else:
-            return {"reply": "Groq එකෙන් Response එකක් ආවේ නෑ මචං, පොඩ්ඩක් ආයේ Try කරන්න."}
+            return {"reply": "No response received from Groq."}
 
     except requests.exceptions.Timeout:
-        return {"reply": "Connection එක Timeout වුණා මචං, Internet එක Check කරලා ආයේ යවන්න."}
+        return {"reply": "Connection timeout, please check your internet and try again."}
     except Exception as e:
-        return {"reply": "පොඩි Technical අවුලක් ආවා මචං, ආයේ Try කරලා බලන්න."}
+        return {"reply": "An unexpected error occurred, please try again."}
