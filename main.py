@@ -570,20 +570,18 @@ async def chat(request: Request):
             else:
                 return {"reply": random.choice(general_options)}
 
-        # --- PROPER SYSTEM PROMPT WITH BEST SINHALA & ACCURACY ---
+        # --- SYSTEM PROMPT (ACCURATE & NATURAL SINHALA) ---
         system_prompt = {
             "role": "system",
             "content": (
-                "You are Merlin AI, an intelligent assistant developed by Infinity Wave.\n"
-                "1. Jump straight into answering. Never echo internal thoughts or instructions.\n"
-                "2. Correctly interpret Singlish/Sinhala names (e.g., 'mari cury/curie' is Marie Curie the famous scientist, NOT food 'curry').\n"
-                "3. Use natural, accurate, modern Sinhala with proper spelling (e.g., 'ජර්මනිය' not 'ඡර්මනිය').\n"
-                "4. If thanked, respond casually ('You're welcome machan!' / 'ඕන වෙලාවක කියන්න මචං!'). Avoid formal robotic replies.\n"
-                "5. Structure responses cleanly with clear headings and bullet points."
+                "You are Merlin AI, an intelligent assistant created by Infinity Wave.\n"
+                "1. Direct response: Answer cleanly and directly without repeating system rules.\n"
+                "2. Transliteration safety: Correctly identify transliterated terms (e.g., 'mari curie' / 'mari cury' is Marie Curie the famous scientist, NOT food 'curry').\n"
+                "3. Sinhala response: Use high quality, grammatically correct natural Sinhala when queried in Sinhala/Singlish.\n"
+                "4. Casual friendly tone for greetings and thanks ('You're welcome machan!' / 'ඕන වෙලාවක කියන්න මචං!')."
             )
         }
 
-        # Keep history minimal to save tokens
         limited_history = history[-2:] if len(history) > 2 else history
 
         messages = [system_prompt]
@@ -592,7 +590,7 @@ async def chat(request: Request):
         
         messages.append({"role": "user", "content": user_message})
 
-        # WE KEEP THE BEST MODEL: llama-3.3-70b-versatile
+        # MIXTRAL 8X7B MODEL (500,000 TPD LIMIT)
         response = requests.post(
             url="https://api.groq.com/openai/v1/chat/completions",
             headers={
@@ -600,10 +598,10 @@ async def chat(request: Request):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama-3.3-70b-versatile",
+                "model": "mixtral-8x7b-32768",
                 "messages": messages,
                 "temperature": 0.3,
-                "max_tokens": 1000  # Token Limit Reduced to prevent Rate Limits!
+                "max_tokens": 1000
             },
             timeout=30
         )
