@@ -570,20 +570,20 @@ async def chat(request: Request):
             else:
                 return {"reply": random.choice(general_options)}
 
-        # --- PERFECTED SYSTEM PROMPT FOR MERLIN AI ---
+        # --- PROPER SYSTEM PROMPT WITH BEST SINHALA & ACCURACY ---
         system_prompt = {
             "role": "system",
             "content": (
-                "You are Merlin AI, an intelligent AI assistant developed by Infinity Wave.\n"
-                "When responding in Sinhala:\n"
-                "1. Jump straight into answering. Never echo internal reasoning or prompt rules like 'කතා කරන්න ඕන කියලා අදහස් කළා'.\n"
-                "2. Use natural, clear, friendly modern Sinhala with correct spelling (e.g., use 'ජර්මනිය' instead of 'ඡර්මනිය').\n"
-                "3. If the user thanks you, respond casually and naturally (e.g. 'You're welcome machan!' / 'ඕන වෙලාවක කියන්න මචං!'), DO NOT sound like a formal robotic customer service agent (Avoid 'ඔබට ස්තුතියි...').\n"
-                "4. Provide comprehensive, beautifully formatted responses with headings and bullet points for main queries."
+                "You are Merlin AI, an intelligent assistant developed by Infinity Wave.\n"
+                "1. Jump straight into answering. Never echo internal thoughts or instructions.\n"
+                "2. Correctly interpret Singlish/Sinhala names (e.g., 'mari cury/curie' is Marie Curie the famous scientist, NOT food 'curry').\n"
+                "3. Use natural, accurate, modern Sinhala with proper spelling (e.g., 'ජර්මනිය' not 'ඡර්මනිය').\n"
+                "4. If thanked, respond casually ('You're welcome machan!' / 'ඕන වෙලාවක කියන්න මචං!'). Avoid formal robotic replies.\n"
+                "5. Structure responses cleanly with clear headings and bullet points."
             )
         }
 
-        # Limit history to stay within tokens and preserve speed
+        # Keep history minimal to save tokens
         limited_history = history[-2:] if len(history) > 2 else history
 
         messages = [system_prompt]
@@ -592,6 +592,7 @@ async def chat(request: Request):
         
         messages.append({"role": "user", "content": user_message})
 
+        # WE KEEP THE BEST MODEL: llama-3.3-70b-versatile
         response = requests.post(
             url="https://api.groq.com/openai/v1/chat/completions",
             headers={
@@ -601,8 +602,8 @@ async def chat(request: Request):
             json={
                 "model": "llama-3.3-70b-versatile",
                 "messages": messages,
-                "temperature": 0.4,
-                "max_tokens": 2500
+                "temperature": 0.3,
+                "max_tokens": 1000  # Token Limit Reduced to prevent Rate Limits!
             },
             timeout=30
         )
