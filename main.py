@@ -543,13 +543,23 @@ async def chat(request: Request):
         if not GROQ_API_KEY:
             return {"reply": "මචං Vercel එකේ GROQ_API_KEY එක Missing වගේ! පොඩ්ඩක් Check කරන්න."}
 
-        # --- GREETINGS & GOODNIGHT INTERCEPT ---
+        # --- THANKS / GREETINGS / GOODNIGHT INTERCEPT ---
         clean_msg = user_message.lower().strip("!.,? ")
         greeting_words = ["hi", "hello", "hey", "good evening", "good morning", "good afternoon"]
         farewell_words = ["good night", "gn", "bye", "goodnight", "sweet dreams", "bye good night"]
+        thanks_words = ["thanks", "thank you", "thanks bn", "thx", "sthuthi", "stuthi"]
 
         is_greeting = any(word in clean_msg for word in greeting_words) and len(clean_msg.split()) <= 4
         is_farewell = any(word in clean_msg for word in farewell_words) and len(clean_msg.split()) <= 4
+        is_thanks = any(word in clean_msg for word in thanks_words) and len(clean_msg.split()) <= 4
+
+        if is_thanks:
+            thanks_options = [
+                "You're welcome! 😊",
+                "Anytime! Glad to help! 👍",
+                "එලම මචං! ඕන වෙලාවක කියන්න! 👊"
+            ]
+            return {"reply": random.choice(thanks_options)}
 
         if is_farewell:
             farewell_options = [
